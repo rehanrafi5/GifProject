@@ -1,0 +1,38 @@
+﻿using XDPaint.Core;
+using XDPaint.Tools.Image.Base;
+
+namespace XDPaint.Tools.Image
+{
+    public class BackgroundTool : BasePaintTool
+    {
+        public override PaintTool Type
+        {
+            get { return PaintTool.Background; }
+        }
+
+        public override bool RenderToPaintTexture
+        {
+            get { return false; }
+        }
+
+        public override bool RenderToLineTexture
+        {
+            get { return false; }
+        }
+
+        public override bool RenderToTextures
+        {
+            get { return false; }
+        }
+
+        public override bool ShowPreview
+        {
+            get { return false; }
+        }
+
+        public override bool AllowRender
+        {
+            get { return false; }
+        }
+    }
+}
