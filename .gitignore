@@ -97,3 +97,20 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# iOS / Unity build artifacts
+IOSBuild/
+*.zip
+*.a
+
+# Unity generated folders
+Library/
+Temp/
+Obj/
+Build/
+Builds/
+Logs/
+
+# OS junk
+.DS_Store
+
