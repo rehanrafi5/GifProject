@@ -8,7 +8,7 @@ using TMPro;
 
 public class ObjectManager : Singleton<ObjectManager>
 {
-    [SerializeField] private TMP_Dropdown _categoryDropdown;
+    //[SerializeField] private TMP_Dropdown _categoryDropdown;
     [Tooltip("Also known as the Objects")]
     [SerializeField] private List<ItemDetail> _actorItemsDetails = new List<ItemDetail>();
     [SerializeField] private List<ItemDetail> _backgroundItemsDetails = new List<ItemDetail>();
@@ -45,7 +45,7 @@ public class ObjectManager : Singleton<ObjectManager>
     private void Start()
     {
         PopulateCategories();
-        _categoryDropdown.onValueChanged.AddListener(OnChangeCategory);
+        //_categoryDropdown.onValueChanged.AddListener(OnChangeCategory);
 
         _controls.gameObject.SetActive(false);
         _layersButton.onClick.AddListener(ToggleLayerPanel);
@@ -80,8 +80,8 @@ public class ObjectManager : Singleton<ObjectManager>
                .Cast<Category>()
                .ToDictionary(t => t.ToString(), t => (int)t);
 
-        _categoryDropdown.ClearOptions();
-        _categoryDropdown.AddOptions(_categoryDict.Keys.ToList());
+        //_categoryDropdown.ClearOptions();
+       // _categoryDropdown.AddOptions(_categoryDict.Keys.ToList());
     }
 
     private void OnChangeCategory(int value)
