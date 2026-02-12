@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class ObjectItem : MonoBehaviour,
-    IDragHandler, IBeginDragHandler, IEndDragHandler, IPointerClickHandler
+    IDragHandler, IBeginDragHandler, IEndDragHandler
 {
     [SerializeField] private Image Image;
     [SerializeField] private float DefaultSize;
@@ -70,33 +70,33 @@ public class ObjectItem : MonoBehaviour,
     }
 
     // 👉 TAP / CLICK SUPPORT
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        if (wasDragged)   // prevent double-trigger from drag
-        {
-            wasDragged = false;
-            return;
-        }
-
-        if (!HasAvailableObjects())
-            return;
-
-        // Calculate center of work area in screen space
-        Vector3 worldCenter = workArea.position; // world position of RectTransform center
-        Vector2 centerScreenPos = RectTransformUtility.WorldToScreenPoint(canvas.worldCamera, worldCenter);
-
-        float offsetY = 150f;
-        centerScreenPos.y += offsetY;
-
-        // Spawn object at adjusted center using FrameManager
-        FrameManager.Instance.CurrentFrame.AddObject(
-            gameObject,           // prefab (or the object you want to spawn)
-            Image.sprite,
-            DefaultSize,
-            centerScreenPos
-        );
-    }
-
+    // public void OnPointerClick(PointerEventData eventData)
+    // {
+    //     if (wasDragged)   // prevent double-trigger from drag
+    //     {
+    //         wasDragged = false;
+    //         return;
+    //     }
+    //
+    //     if (!HasAvailableObjects())
+    //         return;
+    //
+    //     // Calculate center of work area in screen space
+    //     Vector3 worldCenter = workArea.position; // world position of RectTransform center
+    //     Vector2 centerScreenPos = RectTransformUtility.WorldToScreenPoint(canvas.worldCamera, worldCenter);
+    //
+    //     float offsetY = 150f;
+    //     centerScreenPos.y += offsetY;
+    //
+    //     // Spawn object at adjusted center using FrameManager
+    //     FrameManager.Instance.CurrentFrame.AddObject(
+    //         gameObject,           // prefab (or the object you want to spawn)
+    //         Image.sprite,
+    //         DefaultSize,
+    //         centerScreenPos
+    //     );
+    // }
+    //
 
 
     
