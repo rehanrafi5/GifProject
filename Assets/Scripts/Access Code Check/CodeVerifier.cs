@@ -96,20 +96,20 @@ public class CodeVerifier : MonoBehaviour
 
     private async void VerifyCode(string code)
     {
-        bool result = await _httpHelper.UseCode(
-            _tokenUrl,
-            _clientID,
-            _clientSecret,
-            _requestUrl,
-            code);
-
-        if (!result)
-        {
-            _txtMessage.color = colorFail;
-            _txtMessage.text = _msgFailed;
-            _submitCode.interactable = true;
-            return;
-        }
+        // bool result = await _httpHelper.UseCode(
+        //     _tokenUrl,
+        //     _clientID,
+        //     _clientSecret,
+        //     _requestUrl,
+        //     code);
+        //
+        // if (!result)
+        // {
+        //     _txtMessage.color = colorFail;
+        //     _txtMessage.text = _msgFailed;
+        //     _submitCode.interactable = true;
+        //     return;
+        // }
 
 
         // SUCCESS

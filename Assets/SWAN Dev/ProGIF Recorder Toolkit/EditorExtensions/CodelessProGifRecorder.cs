@@ -225,6 +225,9 @@ public class CodelessProGifRecorder : MonoBehaviour
         PGif.iStartRecord(((m_RecorderCamera == null)?Camera.main:m_RecorderCamera), _recorderName, 
 			(progress)=>{
                 m_RecordingProgress = Mathf.CeilToInt(progress * 100) + "%";
+#if UNITY_WEBGL && !UNITY_EDITOR
+        // ignore progress updates on WebGL, optional
+#endif
             },
 			()=>{
 				m_State = "Press the <Save Record> button to save GIF";
@@ -241,6 +244,10 @@ public class CodelessProGifRecorder : MonoBehaviour
                 m_RecordingProgress = "0%";
                 m_SaveProgress = "0%";
                 m_State = "Idle";
+#if UNITY_WEBGL && !UNITY_EDITOR
+    // WebGL: recording done, trigger download
+    RecorderManager.Instance.OnGifReadyWebGL(path, m_OptionalFileName);
+#endif
 
 #if SDEV_MobileMedia
                 if (m_SaveExternal)

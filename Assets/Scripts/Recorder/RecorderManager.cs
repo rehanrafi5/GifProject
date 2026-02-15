@@ -1,6 +1,8 @@
 using System.Collections;
-using System.IO;
 using UnityEngine;
+#if UNITY_WEBGL && !UNITY_EDITOR
+using System.Runtime.InteropServices;
+#endif
 
 public class RecorderManager : Singleton<RecorderManager>
 {
@@ -21,9 +23,7 @@ public class RecorderManager : Singleton<RecorderManager>
         _loadingPopup = PopupManager.Instance.GetPopup<LoadingPopup>();
         _confirmationPopup = PopupManager.Instance.GetPopup<ConfirmationPopup>();
 
-        _filename = _recorder.Rec_OptionalFileName;
-        if (_filename == null || _filename == "")
-            _filename = "LitKit";
+        _filename = string.IsNullOrEmpty(_recorder.Rec_OptionalFileName) ? "LitKit" : _recorder.Rec_OptionalFileName;
 
         if (!_filename.ToLower().EndsWith(".gif"))
             _filename += ".gif";
@@ -33,15 +33,23 @@ public class RecorderManager : Singleton<RecorderManager>
     {
         GIFManager.Instance.OnStart();
 
-        _recorder.Rec_Width = height;
-        _recorder.Rec_Height = Mathf.RoundToInt((float) height / 1.6f);
+#if UNITY_WEBGL && !UNITY_EDITOR
+        _recorder.Rec_Width = width;
+        _recorder.Rec_Height = height;
+        _recorder.Rec_Fps = Mathf.Clamp(fps, 1, 15); // reduce fps for WebGL
+        _recorder.Rec_Duration = duration;
+#else
+        _recorder.Rec_Width = width;
+        _recorder.Rec_Height = Mathf.RoundToInt((float)height / 1.6f);
         _recorder.Rec_Duration = duration;
         _recorder.Rec_Fps = fps;
+#endif
+
         _recorder.StartRecord();
         _recordStarted = true;
 
         _loadingPopup.SetHeader("GIF Creation");
-        _loadingPopup.SetDescription("Recording GIF... ");
+        _loadingPopup.SetDescription("Recording GIF...");
         _loadingPopup.Show();
 
         StartCoroutine(RecordDelay(duration));
@@ -49,43 +57,71 @@ public class RecorderManager : Singleton<RecorderManager>
 
     private IEnumerator RecordDelay(float duration)
     {
-        float delay = 0f;
-
-        while(delay < duration)
+        float timer = 0f;
+        while (timer < duration)
         {
-            delay += Time.deltaTime;
+            timer += Time.deltaTime;
             yield return null;
         }
 
-        SaveRecording();
-    }
-
-    private void SaveRecording()
-    {
+        // SaveRecord stops recording and triggers the recorder callback
         _recorder.SaveRecord();
-
-        GIFManager.Instance.OnStop();
     }
+    public void RecordWebGL(int width, int height, float duration, int fps)
+    {
+        GIFManager.Instance.OnStart();
 
+        _recorder.Rec_Width = width;
+        _recorder.Rec_Height = height;
+        _recorder.Rec_Fps = Mathf.Clamp(fps, 1, 15);
+        _recorder.Rec_Duration = duration;
+
+        _loadingPopup.SetHeader("GIF Creation");
+        _loadingPopup.SetDescription("Recording GIF...");
+        _loadingPopup.Show();
+
+        // WebGL: Start recording, and use the internal callback when done
+        _recorder.StartRecord();
+    }
+#if UNITY_WEBGL && !UNITY_EDITOR
+public void OnGifReadyWebGL(string path, string optionalName)
+{
+    string fileName = string.IsNullOrEmpty(optionalName) ? "LitKit.gif" : optionalName;
+    if (!fileName.ToLower().EndsWith(".gif")) fileName += ".gif";
+
+    DownloadGif(fileName, path); // JS download
+    _loadingPopup.Hide();
+    _successBanner.SetActive(true);
+    GIFManager.Instance.OnStop();
+}
+
+[DllImport("__Internal")]
+private static extern void DownloadGif(string fileName, string path);
+#endif
     private void Update()
     {
-        if(_recordStarted)
+#if UNITY_WEBGL && !UNITY_EDITOR
+    // On WebGL, ignore progress updates, wait for callback
+#else
+        if (_recordStarted)
         {
-            if(_recorder.m_State == "Idle")
+            _loadingPopup.SetDescription($"Creating GIF... {_recorder.m_RecordingProgress}");
+
+            if (_recorder.m_State == "Idle")
             {
                 _recordStarted = false;
-                OnSavingComplete(_recorder.m_SavePath);
-            }
-
-            else
-            {
-                _loadingPopup.SetDescription("Creating GIF file... " + _recorder.m_RecordingProgress.ToString());
+                HandleNonWebGLGif(_recorder.m_SavePath);
             }
         }
+#endif
     }
 
-    private void OnSavingComplete(string path)
+
+    private void HandleNonWebGLGif(string path)
     {
+        GIFManager.Instance.OnStop();
+
+#if UNITY_ANDROID || UNITY_IOS
         NativeGallery.Permission readPermission = CheckPermissions(NativeGallery.PermissionType.Read, path);
         NativeGallery.Permission writePermission = CheckPermissions(NativeGallery.PermissionType.Write, path);
 
@@ -94,25 +130,25 @@ public class RecorderManager : Singleton<RecorderManager>
             NativeGallery.SaveImageToGallery(path, "LitKit", _filename, OnGallerySavingComplete);
             _loadingPopup.SetDescription("Saving GIF file...");
         }
-
         else
         {
             _confirmationPopup.SetHeader("Requires Permissions");
-            _confirmationPopup.SetDescription("Please go to your Settings to give LitKit access to your Photos. Change the access to Read and Write.");
+            _confirmationPopup.SetDescription("Please give LitKit access to Photos (Read & Write).");
             _confirmationPopup.SetConfirmAction(null, "OK");
             _confirmationPopup.Show();
         }
+#else
+        Debug.Log("Saved locally at: " + path);
+        _loadingPopup.Hide();
+        _successBanner.SetActive(true);
+#endif
     }
 
     private NativeGallery.Permission CheckPermissions(NativeGallery.PermissionType permissionType, string path)
     {
         NativeGallery.Permission permission = NativeGallery.CheckPermission(permissionType);
-
-        if(permission == NativeGallery.Permission.ShouldAsk)
-        {
+        if (permission == NativeGallery.Permission.ShouldAsk)
             permission = NativeGallery.RequestPermission(permissionType);
-        }
-
         return permission;
     }
 
@@ -120,9 +156,5 @@ public class RecorderManager : Singleton<RecorderManager>
     {
         _loadingPopup.Hide();
         _successBanner.SetActive(true);
-        //_confirmationPopup.SetHeader("File Saved");
-        //_confirmationPopup.SetDescription("GIF file has been saved on your device's Gallery.");
-        //_confirmationPopup.SetConfirmAction(null, "OK");
-        //_confirmationPopup.Show();
     }
 }

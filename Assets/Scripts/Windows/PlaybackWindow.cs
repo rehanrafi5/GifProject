@@ -157,6 +157,10 @@ public class PlaybackWindow : Window
 
     private void OnSaveGIF()
     {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        RecorderManagerWebGL.Instance.RecordRectTransformGif();
+#else
         RecorderManager.Instance.Record(GIFManager.Instance.Width, GIFManager.Instance.Height, (float) _frames.Count * _currentSpeed, _framesPerSecond);
-    }
+    #endif
+}
 }
