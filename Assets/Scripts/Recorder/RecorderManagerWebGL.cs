@@ -22,7 +22,7 @@ public class RecorderManagerWebGL : MonoBehaviour
     [Header("Optional UI")]
     public GameObject successBanner;
     
-    [SerializeField] LoadingPopup _loadingPopup;
+    //[SerializeField] LoadingPopup _loadingPopup;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
     [DllImport("__Internal")] private static extern void InitGifJS();
@@ -64,9 +64,9 @@ public class RecorderManagerWebGL : MonoBehaviour
         int totalFrames = Mathf.CeilToInt(fps * duration);
         float interval = 1f / fps;
 
-_loadingPopup.SetHeader("GIF Creation");
-        _loadingPopup.SetDescription("Recording GIF...");
-        _loadingPopup.Show();
+//_loadingPopup.SetHeader("GIF Creation");
+        //_loadingPopup.SetDescription("Recording GIF...");
+        //_loadingPopup.Show();
 
         for (int i = 0; i < totalFrames; i++)
         {
@@ -82,7 +82,7 @@ _loadingPopup.SetHeader("GIF Creation");
 
         FinishGifRecordingJS();
 
-_loadingPopup.Hide();
+//_loadingPopup.Hide();
 
         if (successBanner != null)
             successBanner.SetActive(true);
