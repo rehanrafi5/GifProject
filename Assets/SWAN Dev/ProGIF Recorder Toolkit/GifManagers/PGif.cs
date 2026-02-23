@@ -665,6 +665,7 @@ public class PGif : MonoBehaviour
 	{
 		Instance.SetGifRotation(rotation);
 	}
+	
 
     /// <summary>
     /// Sets the transparent color, hide this color in the GIF. 

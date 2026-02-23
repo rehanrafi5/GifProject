@@ -1,5 +1,6 @@
 ﻿// Created by SwanDEV 2018
 
+using System;
 using UnityEngine;
 using System.IO;
 
@@ -98,7 +99,7 @@ public class CodelessProGifRecorder : MonoBehaviour
     [HideInInspector] public bool m_RecorderStarted;
     
     private Rect _GUIRect = new Rect();
-
+    
     private void OnGUI()
     {
         if (m_EnableHotkeys)
@@ -245,8 +246,14 @@ public class CodelessProGifRecorder : MonoBehaviour
                 m_SaveProgress = "0%";
                 m_State = "Idle";
 #if UNITY_WEBGL && !UNITY_EDITOR
-    // WebGL: recording done, trigger download
-    RecorderManager.Instance.OnGifReadyWebGL(path, m_OptionalFileName);
+
+// byte[] gifBytes = PGif.iGetRecorder(_recorderName).GetGif();
+// RecorderManagerWebGL.Instance.OnFileSaved(gifBytes);
+//
+// string filename = string.IsNullOrEmpty(m_OptionalFileName) ? "MyGif.gif" : m_OptionalFileName;
+// if (!filename.ToLower().EndsWith(".gif")) filename += ".gif";
+//
+// RecorderManagerWebGL.Instance.DownloadFile(gifBytes, filename);
 #endif
 
 #if SDEV_MobileMedia
@@ -263,7 +270,6 @@ public class CodelessProGifRecorder : MonoBehaviour
                 }
                 
                 if (!m_DeleteOriginGifAfterSaveExternal)
-#endif
                 {
                     // Check to Move the file to the specified location
                     FilePathName fpn = FilePathName.Instance;
@@ -284,6 +290,7 @@ public class CodelessProGifRecorder : MonoBehaviour
                         m_SavePath = toPath;
                     }
                 }
+#endif
             }
 		);
 	}
@@ -298,6 +305,7 @@ public class CodelessProGifRecorder : MonoBehaviour
             m_State = "Saving..";
             PGif.iStopAndSaveRecord(_recorderName);
         }
+
     }
 
     public void PauseRecord()

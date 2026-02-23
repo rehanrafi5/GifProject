@@ -1,20 +1,21 @@
 mergeInto(LibraryManager.library, {
 
-    CreateGIF: function (namePtr, delay, width, height) {
+    CreateGIF: function(namePtr, delay, w, h) {
         var name = UTF8ToString(namePtr);
         window.gifFrames = [];
         window.gifDelay = delay;
-        window.gifWidth = width;
-        window.gifHeight = height;
+        window.gifWidth = w;
+        window.gifHeight = h;
         window.gifName = name;
     },
 
-    AddFrame: function (ptr, length) {
-        var data = HEAPU8.slice(ptr, ptr + length);
+    AddFrame: function(ptr, len) {
+        var data = HEAPU8.slice(ptr, ptr + len);
         window.gifFrames.push(data);
     },
 
-    FinishGIF: function () {
+    FinishGIF: function() {
+        // Use gif.js
         var gif = new GIF({
             workers: 2,
             quality: 10,
@@ -27,7 +28,6 @@ mergeInto(LibraryManager.library, {
             var src = window.gifFrames[i];
             var rgba = new Uint8ClampedArray(src.length);
 
-            // Handle transparency
             for (var p = 0; p < src.length; p += 4) {
                 var r = src[p];
                 var g = src[p + 1];
@@ -51,9 +51,9 @@ mergeInto(LibraryManager.library, {
             gif.addFrame(frame, { delay: window.gifDelay });
         }
 
-        gif.on('finished', function (blob) {
+        gif.on('finished', function(blob) {
             var url = URL.createObjectURL(blob);
-            var a = document.createElement('a');
+            var a = document.createElement("a");
             a.href = url;
             a.download = window.gifName + ".gif";
             a.click();

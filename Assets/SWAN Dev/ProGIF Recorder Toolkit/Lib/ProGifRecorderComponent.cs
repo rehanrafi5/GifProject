@@ -35,6 +35,7 @@ using ThreadPriority = System.Threading.ThreadPriority;
 [RequireComponent(typeof(Camera)), DisallowMultipleComponent]
 public class ProGifRecorderComponent : MonoBehaviour
 {
+	private byte[] _gifBytes;
 	//onDurationEnd: you can set something to do at the recordTime finish, 
 	//the recorder is still recording, use ProGifRecorder->Stop() to stop
 	public Action onDurationEnd = null;
@@ -907,9 +908,7 @@ public class ProGifRecorderComponent : MonoBehaviour
 
         // Multithreaded encoding jobs starts here.
         numberOfThreads = Mathf.Min(frameCountFinal, m_MaxNumberOfThreads < 1 ? SystemInfo.processorCount : m_MaxNumberOfThreads);
-#if UNITY_EDITOR
         Debug.Log("Number of threads: " + numberOfThreads);
-#endif
 
         stopwatch = new System.Diagnostics.Stopwatch();
         stopwatch.Start();
@@ -927,9 +926,7 @@ public class ProGifRecorderComponent : MonoBehaviour
         for (int threadIndex = 0; threadIndex < numberOfThreads; threadIndex++)
         {
             int leftOverFrameAvg = (leftOverFrames > 0 ? 1 : 0);
-#if UNITY_EDITOR
             Debug.Log("ThreadIndex-" + threadIndex + ": " + startIndex + "-" + (startIndex + framesOnEachThread + leftOverFrameAvg - 1) + ", Total: " + frameCountFinal);
-#endif
             framesArray[threadIndex] = new List<Frame>();
             for (int i = startIndex; i < startIndex + framesOnEachThread + leftOverFrameAvg; i++)
             {
@@ -953,7 +950,7 @@ public class ProGifRecorderComponent : MonoBehaviour
             {
                 encoder.SetTransparencyColor(m_TransparentColor, m_TransparentColorRange);
             }
-
+            
             // Check if apply the Override Frame Delay value
             if (m_FrameDelay_Override > 0f)
             {
@@ -970,7 +967,7 @@ public class ProGifRecorderComponent : MonoBehaviour
                 m_Frames = framesArray[i],
                 m_OnFileSaveProgress = FileSaveProgress
             };
-
+            
             workers.Add(worker);
 
             // Make sure only the first encoder writes the beginning
@@ -980,8 +977,46 @@ public class ProGifRecorderComponent : MonoBehaviour
             worker.m_Encoder.m_IsLastEncoder = i == numberOfThreads - 1;
 
             worker.Start();
+            
+            Debug.Log("_0");
 		}
     }
+	public IEnumerator EncodeGifFromFrames(List<Frame> frames, string filename)
+	{
+		if (frames == null || frames.Count == 0)
+		{
+			Debug.LogError("No frames to encode");
+			yield break;
+		}
+
+		int width = frames[0].Width;
+		int height = frames[0].Height;
+
+		ProGifEncoder encoder = new ProGifEncoder(0, 20, 0, null);
+
+		// 🔥 CRITICAL FIXES
+		encoder.m_IsFirstFrame = true;
+		encoder.m_AutoTransparent = false;
+		encoder.SetDelay(100); // 10 FPS
+
+		encoder.Start();
+
+		for (int i = 0; i < frames.Count; i++)
+		{
+			encoder.AddFrame(frames[i]);
+
+			if (i % 2 == 0)
+				yield return null;
+		}
+
+		encoder.Finish();
+
+		byte[] gifBytes = encoder.GetMemoryStream().ToArray();
+
+		Debug.Log("GIF size: " + gifBytes.Length);
+
+		RecorderManagerWebGL.Instance.DownloadGif(gifBytes, filename);
+	}
 
     private void FileSaved(int id, string path)
     {
@@ -1008,25 +1043,31 @@ public class ProGifRecorderComponent : MonoBehaviour
 			JobsFinished();
 		}
 	}
-
+	public byte[] GetGif()
+	{
+		return _gifBytes;
+	}
     private void JobsFinished()
 	{
-        FileStream fileStream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
-        for (int i = 0; i < workers.Count; i++)
-        {
-            MemoryStream stream = workers[i].m_Encoder.GetMemoryStream();
-            stream.Position = 0;
-            stream.WriteTo(fileStream);
-            stream.Close();
-        }
-        fileStream.Close();
+		Debug.Log("_1");
+		FileStream fileStream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
+		for (int i = 0; i < workers.Count; i++)
+		{
+			MemoryStream stream = workers[i].m_Encoder.GetMemoryStream();
+			stream.Position = 0;
+			stream.WriteTo(fileStream);
+			stream.Close();
+		}
+		Debug.Log("_2");
+		fileStream.Close();
 
 		FileSaved(workerId, filePath);
 
+		Debug.Log("_3");
 #if UNITY_EDITOR
-        Debug.Log("All jobs finished, total encode time: " + stopwatch.Elapsed);
+		Debug.Log("All jobs finished, total encode time: " + stopwatch.Elapsed);
 #endif
-        stopwatch.Stop();
+		stopwatch.Stop();
     }
 
 	// Converts a RenderTexture to a GifFrame

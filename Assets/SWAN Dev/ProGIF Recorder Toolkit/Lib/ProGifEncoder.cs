@@ -470,7 +470,7 @@ internal class ProGifEncoder
 	}
 }
 
-internal class Frame
+public class Frame
 {
 	public int Width;
 	public int Height;

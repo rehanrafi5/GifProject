@@ -21,6 +21,11 @@ public class PlaybackWindow : Window
     private int _frameIndex;
     private bool _isRunning;
 
+    [SerializeField] private Canvas[] canvasesToHide;
+    [SerializeField] private Image BGImg;
+
+    public bool saveBtnPressed;
+
     protected override void Start()
     {
         base.Start();
@@ -50,7 +55,11 @@ public class PlaybackWindow : Window
 
     private void Update()
     {
-        if(_isRunning)
+        if (saveBtnPressed)
+        {
+            return;
+        }
+        if (_isRunning)
         {
             _currentTime += Time.deltaTime;
 
@@ -157,10 +166,21 @@ public class PlaybackWindow : Window
 
     private void OnSaveGIF()
     {
+        RecorderManager.Instance.Record(GIFManager.Instance.Width, GIFManager.Instance.Height, (float) _frames.Count * _currentSpeed, _framesPerSecond);
+        return;
 #if UNITY_WEBGL && !UNITY_EDITOR
-        RecorderManagerWebGL.Instance.RecordRectTransformGif();
+RecorderManagerWebGL.Instance.Record(GIFManager.Instance.Width, GIFManager.Instance.Height, (float) _frames.Count * _currentSpeed, _framesPerSecond);
 #else
         RecorderManager.Instance.Record(GIFManager.Instance.Width, GIFManager.Instance.Height, (float) _frames.Count * _currentSpeed, _framesPerSecond);
     #endif
 }
+
+    public void ShowCanvases()
+    {
+        for (int i = 0; i < canvasesToHide.Length; i++)
+        {
+            canvasesToHide[i].enabled = true;
+        }
+        BGImg.enabled = true;
+    }
 }

@@ -1,24 +1,21 @@
 mergeInto(LibraryManager.library, {
-    DownloadGif: function (fileNamePtr, byteArrayPtr, byteArrayLength) {
-        try {
-            var fileName = UTF8ToString(fileNamePtr);
-            var bytes = HEAPU8.slice(byteArrayPtr, byteArrayPtr + byteArrayLength);
+    DownloadGifFile: function (byteArrayPtr, byteArrayLength, fileNamePtr) 
+    {
+        var fileName = UTF8ToString(fileNamePtr);
 
-            var blob = new Blob([bytes], { type: "image/gif" });
-            var url = URL.createObjectURL(blob);
-
-            var link = document.createElement("a");
-            link.href = url;
-            link.download = fileName;
-
-            document.body.appendChild(link);
-            link.click();
-
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+        var bytes = new Uint8Array(byteArrayLength);
+        for (var i = 0; i < byteArrayLength; i++) {
+            bytes[i] = HEAPU8[byteArrayPtr + i];
         }
-        catch (e) {
-            console.error("DownloadGif failed:", e);
-        }
+
+        var blob = new Blob([bytes], { type: "image/gif" });
+
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 });

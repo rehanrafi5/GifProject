@@ -127,7 +127,10 @@ public class ProGifRecorder
 		if (recorderCom != null)
 			recorderCom.SetGifRotation(rotation);
 	}
-
+	public byte[] GetGif()
+	{
+		return recorderCom.GetGif();
+	}
 	/// <summary>
 	/// Set the gif aspect ratio.
 	/// * Change during/after PreProcessing state will not be applied.
@@ -355,7 +358,6 @@ public class ProGifRecorder
 	{
 		OnPreProcessingDone();
 	}
-
 
 	public void SetOnRecordAction(Action<float> onRecordAction)
 	{
