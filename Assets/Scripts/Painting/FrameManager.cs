@@ -17,6 +17,9 @@ public class FrameManager : Singleton<FrameManager>
     [SerializeField] private Button _duplicateNextFrameButton;
     [SerializeField] private ScrollRect _framesScroll;
 
+    public GameObject PlayAbleCanvas;
+    public int CurrentFrameIndex;
+
     [SerializeField]
     [Range(0f, 500f)]
     [Tooltip("Additional value for the range of content doled out by this script to its subscribers.")]
@@ -227,7 +230,7 @@ public class FrameManager : Singleton<FrameManager>
         removedFrame.FrameButton.OnFrameSwapped -= HandleFrameSwapped;
     }
 
-    private void HandleFrameSwitched(int index)
+    public void HandleFrameSwitched(int index)
     {
         ObjectManager.Instance.DeselectObject();
         UndoManager.Instance.Clear();
@@ -240,6 +243,17 @@ public class FrameManager : Singleton<FrameManager>
         else
         {
             SetFrame(index);
+        }
+    }
+
+    public void HandleFrameSwitchJugar(int index)
+    {
+        if(_frames.Contains(_currentFrame))
+        {
+            TakeScreenshot(_currentFrame, () =>
+            {
+                
+            });
         }
     }
 
@@ -342,7 +356,6 @@ public class FrameManager : Singleton<FrameManager>
         yield return new WaitForEndOfFrame();
         TakeScreenshots();
     }
-
     private void TakeScreenshots()
     {
         // Get the scroll's current position and add the buffer

@@ -27,7 +27,6 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -45,41 +44,36 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_SaveDirectory: 0
-  m_FolderName: Save
-  m_OptionalFileName: litkit
-  m_SaveExternal: 1
+  m_FolderName: 
+  m_OptionalFileName: 
+  m_SaveExternal: 0
+  m_DeleteOriginGifAfterSaveExternal: 1
   m_AutoSave: 0
-  m_AspectRatio: {x: 16, y: 10}
-  m_AutoAspect: 0
-  m_Width: 1920
-  m_Height: 1080
+  m_AspectRatio: {x: 0, y: 0}
+  m_AutoAspect: 1
+  m_Width: 360
+  m_Height: 360
   m_Duration: 3
   m_Fps: 15
   m_Loop: 0
   m_Quality: 20
   m_TransparentColor:
     serializedVersion: 2
-    rgba: 4294902015
-  m_TransparentColorRange: 90
-  m_EnableHotkeys: 0
+    rgba: 0
+  m_TransparentColorRange: 0
+  m_EnableHotkeys: 1
   m_Hotkey_StartRec: 114
   m_Hotkey_Save: 115
   m_Hotkey_Pause: 112
   m_Hotkey_Resume: 111
   m_Hotkey_Cancel: 27
-  m_ShowGUI: 0
+  m_ShowGUI: 1
   m_GUIRect:
     serializedVersion: 2
     x: 0.01
     y: 0.01
     width: 0.5
-    height: 0.015
+    height: 0.02
   m_GUITextColor: {r: 0, g: 1, b: 0, a: 1}
   m_RecorderCamera: {fileID: 0}
-  m_AllCameras:
-  - {fileID: 0}
-  m_RecordingProgress: 0%
-  m_SaveProgress: 0%
-  m_State: Idle
-  m_SavePath: GIF Path
-  m_RecorderStarted: 0
+  m_AllCameras: []

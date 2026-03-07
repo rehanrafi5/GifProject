@@ -61,8 +61,6 @@ public class ProGifDemoMgr : MonoBehaviour
 	{
 		_instance = this;
 
-        if (m_AntiAliasingLevel > 0) QualitySettings.antiAliasing = m_AntiAliasingLevel;
-
 		SetButtonState(btn_PauseRecord, ProGifManager.GetColor(ProGifManager.CommonColorEnum.Black), false);
 		SetButtonState(btn_ResumeRecord, ProGifManager.GetColor(ProGifManager.CommonColorEnum.Black), false);
         SetButtonState(btn_CancelRecord, ProGifManager.GetColor(ProGifManager.CommonColorEnum.Black), false);
@@ -238,8 +236,9 @@ public class ProGifDemoMgr : MonoBehaviour
                 Debug.Log("Mobile Media Save Path: " + androidNativeSavePath);
 #endif
 
-                StartCoroutine(_OnFileSaved());
-			}
+                StartCoroutine(_OnFileSaved(path));
+			},
+			gifFileName:"", subFolderName: "MyGIFs"
 		);
 
         // Disable buttons
@@ -248,10 +247,17 @@ public class ProGifDemoMgr : MonoBehaviour
 		SetButtonState(btn_SaveRecord, ProGifManager.GetColor(ProGifManager.CommonColorEnum.Black), false);
 	}
 
-	private IEnumerator _OnFileSaved()
+	private IEnumerator _OnFileSaved(string path)
 	{
 		yield return new WaitForSeconds(2f);
 		_ResetGifProgress();
+
+		if (Application.platform == RuntimePlatform.WebGLPlayer)
+		{
+			byte[] bytes = SDev.EasyIO.LoadBytes(path);
+			SDev.EasyIO.PlatformSafeMessage("File size: " + bytes.Length + "\nSaved: " + path);
+			SDev.EasyIO.WebGL_SaveToLocal(bytes, System.IO.Path.GetFileName(path));
+		}
 	}
 
 	private void _ResetGifProgress()
@@ -322,13 +328,27 @@ public class ProGifDemoMgr : MonoBehaviour
 
     public void SetTransparentExtras()
     {
-        ProGifManager.Instance.m_GifRecorder.SetTransparentExtras(true, ProGifManager.Instance.m_Width, ProGifManager.Instance.m_Height);
-    }
+		QualitySettings.antiAliasing = m_AntiAliasingLevel;
+
+		if (ProGifManager.Instance.m_GifRecorder == null)
+		{
+			Debug.LogWarning("Please start the recorder first!");
+			return;
+		}
+
+		ProGifManager.Instance.m_GifRecorder.SetTransparentExtras(true, ProGifManager.Instance.m_Width, ProGifManager.Instance.m_Height);
+	}
 
     public void UpdateTransparentColor()
     {
-        ProGifManager.Instance.m_GifRecorder.SetTransparent(ProGifManager.Instance.m_TransparentColor, 0);
-    }
+		if (ProGifManager.Instance.m_GifRecorder == null)
+		{
+			Debug.LogWarning("Please start the recorder first!");
+			return;
+		}
+
+		ProGifManager.Instance.m_GifRecorder.SetTransparent(ProGifManager.Instance.m_TransparentColor, 0);
+	}
 
 #endregion
 

@@ -1,9 +1,6 @@
 ﻿// Created by SwanDEV 2018
-
-using System;
 using UnityEngine;
 using System.IO;
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -23,11 +20,11 @@ public class CodelessProGifRecorder : MonoBehaviour
     public string Rec_OptionalFileName { get { return m_OptionalFileName; } set { m_OptionalFileName = value; } }
 
 #if SDEV_MobileMedia
-    [Tooltip("Copy the GIF to the External directory, the External directory can be accessed in the Android Gallery or iOS Photos (Android & iOS only)")]
+    [Tooltip("Save GIF to External directory, the External directory can be accessed in Android Gallery or iOS Photos (Android & iOS only)")]
 #else
-    [Tooltip("Copy the GIF to the External directory, the External directory can be accessed in the Android Gallery or iOS Photos (Android & iOS only)" +
+    [Tooltip("Save GIF to External directory, the External directory can be accessed in Android Gallery or iOS Photos (Android & iOS only)" +
         " *** MobileMedia Plugin(MMP) required. When you have the plugin installed, " +
-        "add the scripting define symbol ''SDEV_MobileMedia'' in the Unity PlayerSettings > OtherSettings > Scripting Define Symbols")]
+        "add the scripting define symbol 'SDEV_MobileMedia' in Unity PlayerSettings > OtherSettings > Scripting Define Symbols")]
 #endif
     public bool m_SaveExternal = false;
 #if SDEV_MobileMedia
@@ -82,7 +79,7 @@ public class CodelessProGifRecorder : MonoBehaviour
     public KeyCode m_Hotkey_Cancel = KeyCode.Escape;
     public bool m_ShowGUI = true;
     [Tooltip("Position and size of the GUI text and buttons. Change the 'H' value for changing the button and text size.")]
-    public Rect m_GUIRect = new Rect(0.01f, 0.01f, 0.5f, 0.05f);
+    public Rect m_GUIRect = new Rect(0.01f, 0.01f, 0.5f, 0.02f);
     public Color m_GUITextColor = Color.green;
     
 	[Header("[ Camera Settings ]")]
@@ -92,14 +89,21 @@ public class CodelessProGifRecorder : MonoBehaviour
 	private int _currCameraIndex = 0;
 	private const string _recorderName = "CodelessProGifRecorder";
 
-	[HideInInspector] public string m_RecordingProgress = "0%";
-    [HideInInspector] public string m_SaveProgress = "0%";
-    [HideInInspector] public string m_State = "Idle";
-	[HideInInspector] [TextArea(1, 2)] public string m_SavePath = "GIF Path";
-    [HideInInspector] public bool m_RecorderStarted;
+	public string m_RecordingProgress { get; private set; }
+    public string m_SaveProgress { get; private set; }
+    public string m_State { get; private set; }
+    public string m_SavePath { get; private set; }
+    public bool m_RecorderStarted { get; private set; }
     
     private Rect _GUIRect = new Rect();
-    
+
+    private void Awake()
+    {
+        m_RecordingProgress = "0%";
+        m_SaveProgress = "0%";
+        m_State = "Idle";
+    }
+
     private void OnGUI()
     {
         if (m_EnableHotkeys)
@@ -191,6 +195,13 @@ public class CodelessProGifRecorder : MonoBehaviour
         }
     }
 
+
+    public string GetSaveDirectory()
+    {
+        string directory = FilePathName.Instance.GetAppPath(m_SaveDirectory);
+        return string.IsNullOrEmpty(m_FolderName) ? directory : Path.Combine(directory, m_FolderName);
+    }
+
     public void FindCameras()
 	{
 		m_AllCameras = Camera.allCameras;
@@ -201,6 +212,11 @@ public class CodelessProGifRecorder : MonoBehaviour
 		}
 	}
 
+    public byte[] GetBytes()
+    {
+        byte[] gifBytes = File.ReadAllBytes(m_SavePath);
+        return gifBytes;
+    }
 	public void SetCamera(int index)
 	{
         if (_currCameraIndex == index || m_AllCameras == null || m_AllCameras.Length == 0) return;
@@ -226,9 +242,6 @@ public class CodelessProGifRecorder : MonoBehaviour
         PGif.iStartRecord(((m_RecorderCamera == null)?Camera.main:m_RecorderCamera), _recorderName, 
 			(progress)=>{
                 m_RecordingProgress = Mathf.CeilToInt(progress * 100) + "%";
-#if UNITY_WEBGL && !UNITY_EDITOR
-        // ignore progress updates on WebGL, optional
-#endif
             },
 			()=>{
 				m_State = "Press the <Save Record> button to save GIF";
@@ -245,16 +258,6 @@ public class CodelessProGifRecorder : MonoBehaviour
                 m_RecordingProgress = "0%";
                 m_SaveProgress = "0%";
                 m_State = "Idle";
-#if UNITY_WEBGL && !UNITY_EDITOR
-
-// byte[] gifBytes = PGif.iGetRecorder(_recorderName).GetGif();
-// RecorderManagerWebGL.Instance.OnFileSaved(gifBytes);
-//
-// string filename = string.IsNullOrEmpty(m_OptionalFileName) ? "MyGif.gif" : m_OptionalFileName;
-// if (!filename.ToLower().EndsWith(".gif")) filename += ".gif";
-//
-// RecorderManagerWebGL.Instance.DownloadFile(gifBytes, filename);
-#endif
 
 #if SDEV_MobileMedia
                 if (m_SaveExternal)
@@ -270,6 +273,7 @@ public class CodelessProGifRecorder : MonoBehaviour
                 }
                 
                 if (!m_DeleteOriginGifAfterSaveExternal)
+#endif
                 {
                     // Check to Move the file to the specified location
                     FilePathName fpn = FilePathName.Instance;
@@ -290,7 +294,6 @@ public class CodelessProGifRecorder : MonoBehaviour
                         m_SavePath = toPath;
                     }
                 }
-#endif
             }
 		);
 	}
@@ -305,7 +308,6 @@ public class CodelessProGifRecorder : MonoBehaviour
             m_State = "Saving..";
             PGif.iStopAndSaveRecord(_recorderName);
         }
-
     }
 
     public void PauseRecord()
@@ -374,78 +376,104 @@ public class CodelessProGifRecorderCustomEditor : Editor
 
         //GUI.backgroundColor = isLightSkin ? new Color(0.8f, 0.7f, 0.2f, 1f) : Color.yellow; 
 
-        CodelessProGifRecorder recorder = (CodelessProGifRecorder)target;
+        CodelessProGifRecorder mono = (CodelessProGifRecorder)target;
         
         cameraSelection = GUILayout.SelectionGrid(cameraSelection, cameraOptions, 2);
-		recorder.SetCamera(cameraSelection);
+		mono.SetCamera(cameraSelection);
 
 		GUILayout.Label("\nFind all Cameras in the scene:\n(Drag the camera you want to Recorder Camera)");
 		if(GUILayout.Button("Find Cameras"))
 		{
-            _SetupCamera(recorder);
+            _SetupCamera(mono);
 		}
 
-        if (recorder.State == ProGifRecorder.RecorderState.Stopped)
+        if (mono.State == ProGifRecorder.RecorderState.Stopped)
         {
             GUILayout.Label("\n\n[ Start Record GIF ]\nStart record GIF with Recorder Camera, or main camera:");
             if (GUILayout.Button("Start Record") && Application.isPlaying)
             {
-                _SetupCamera(recorder);
-                recorder.StartRecord();
+                _SetupCamera(mono);
+                mono.StartRecord();
             }
         }
         else
         {
             GUILayout.Label("\n\n[ Recorder Started ]\nControl & Save the recorder using below buttons:");
             EditorGUILayout.BeginHorizontal();
-            if (recorder.State == ProGifRecorder.RecorderState.Recording)
+            if (mono.State == ProGifRecorder.RecorderState.Recording)
             {
-                if (GUILayout.Button("Pause Record")) recorder.PauseRecord();
+                if (GUILayout.Button("Pause Record")) mono.PauseRecord();
             }
             else
             {
-                if (GUILayout.Button("Resume Record")) recorder.ResumeRecord();
+                if (GUILayout.Button("Resume Record")) mono.ResumeRecord();
             }
 
-            if (GUILayout.Button("Cancel Record")) recorder.CancelRecord();
+            if (GUILayout.Button("Cancel Record")) mono.CancelRecord();
             EditorGUILayout.EndHorizontal();
         }
+
+        GUILayout.Space(5);
 
         GUILayout.Label("Stop and save the stored frames as GIF:");
         if (GUILayout.Button("Save Record"))
         {
-            recorder.SaveRecord();
+            mono.SaveRecord();
         }
 
-		GUILayout.Label("\nRecord Progress: " + recorder.m_RecordingProgress
-			+ "\nSave Progress: " + recorder.m_SaveProgress
-			+ "\nStatus: " + recorder.m_State
-			+ "\n\nGIF Path: " + recorder.m_SavePath + "\n", helpBoxStyle);
+		GUILayout.Label("\nRecord Progress: " + mono.m_RecordingProgress
+			+ "\nSave Progress: " + mono.m_SaveProgress
+			+ "\nStatus: " + mono.m_State
+			+ "\n\nGIF Path: " + mono.m_SavePath + "\n", helpBoxStyle);
 
-		if(GUILayout.Button("View GIF"))
+
+        if (GUILayout.Button("View GIF"))
 		{
-			if(string.IsNullOrEmpty(recorder.m_SavePath)) return;
-			_OpenURL(FilePathName.Instance.EnsureLocalPath(recorder.m_SavePath));
+            if (!Application.isPlaying || string.IsNullOrEmpty(mono.m_SavePath))
+            {
+                Debug.Log("Please play your scene and record GIF in the Editor.");
+                return;
+            }
+            _OpenURL(mono.m_SavePath);
 		}
 
-		if(GUILayout.Button("Reveal In Folder"))
+        if (GUILayout.Button("Copy GIF Path"))
 		{
-			if(string.IsNullOrEmpty(recorder.m_SavePath)) return;
-			string fileName = Path.GetFileName(recorder.m_SavePath);
-			string directoryPath = recorder.m_SavePath.Remove(recorder.m_SavePath.IndexOf(fileName));
-			_OpenURL(FilePathName.Instance.EnsureLocalPath(directoryPath));
-		}
-
-		if(GUILayout.Button("Copy GIF Path"))
-		{
-			if(string.IsNullOrEmpty(recorder.m_SavePath)) return;
-
-			TextEditor te = null;
-			te = new TextEditor();
-			te.text = recorder.m_SavePath;
+            if (!Application.isPlaying || string.IsNullOrEmpty(mono.m_SavePath))
+            {
+                Debug.Log("Please play your scene and record GIF in the Editor.");
+                return;
+            }
+            TextEditor te = new TextEditor();
+			te.text = mono.m_SavePath;
 			te.SelectAll();
 			te.Copy();
+            Debug.Log("Copied: " + te.text);
 		}
+
+        GUILayout.Space(5);
+
+        if (GUILayout.Button("Show Save Directory"))
+        {
+            string directory = mono.GetSaveDirectory();
+            if (string.IsNullOrEmpty(directory)) return;
+            if (Directory.Exists(directory))
+                EditorUtility.RevealInFinder(directory);
+            else
+                Debug.LogWarning("Directory not exist: " + directory);
+        }
+
+        if (GUILayout.Button("Copy Save Directory"))
+        {
+            string directory = mono.GetSaveDirectory();
+            if (string.IsNullOrEmpty(directory)) return;
+            TextEditor te = new TextEditor();
+            te.text = directory;
+            te.SelectAll();
+            te.Copy();
+            Debug.Log("Copied: " + directory);
+        }
+
 
         GUILayout.Space(10);
 
@@ -467,6 +495,7 @@ public class CodelessProGifRecorderCustomEditor : Editor
 
     private void _OpenURL(string url)
     {
+        Debug.Log("Open URL: " + url);
 #if UNITY_EDITOR_OSX
         System.Diagnostics.Process.Start(url);
 #else

@@ -14,3 +14,10 @@ TrueTypeFontImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 98258
+  packageName: Pro GIF Recorder Toolkit
+  packageVersion: 2.0.6
+  assetPath: Assets/SWAN Dev/Common/Fonts/DroidSansMono.ttf
+  uploadId: 690435

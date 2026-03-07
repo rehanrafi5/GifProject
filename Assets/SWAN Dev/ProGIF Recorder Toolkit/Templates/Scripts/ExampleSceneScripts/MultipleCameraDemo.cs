@@ -246,7 +246,7 @@ public class MultipleCameraDemo : MonoBehaviour
         PGif.iGetRecorder("Cam1").recorderCom.m_EncodePlayMode = ProGifRecorderComponent.EncodePlayMode.Normal;
 
         //PGif.iStopAndSaveRecord("Cam1");
-        PGif.iSaveRecord("Cam1");   // You can resume the recorder if the Stop() method is never called.
+        PGif.iSaveRecord("Cam1", null, "MyGIFs");   // You can resume the recorder if the Stop() method is never called.
         Debug.Log("Save the recorder: Cam1");
 
         //Preview the GIF immediately
@@ -262,7 +262,7 @@ public class MultipleCameraDemo : MonoBehaviour
         PGif.iGetRecorder("Cam2").recorderCom.m_EncodePlayMode = ProGifRecorderComponent.EncodePlayMode.PingPong;
 
         //PGif.iStopAndSaveRecord("Cam2");
-        PGif.iSaveRecord("Cam2"); // You can resume the recorder if the Stop() method is never called.
+        PGif.iSaveRecord("Cam2", null, "MyGIFs"); // You can resume the recorder if the Stop() method is never called.
         Debug.Log("Save the recorder: Cam2");
 
         //Preview the GIF immediately
@@ -278,7 +278,7 @@ public class MultipleCameraDemo : MonoBehaviour
         PGif.iGetRecorder("Cam3").recorderCom.m_EncodePlayMode = ProGifRecorderComponent.EncodePlayMode.Reverse;
 
         //PGif.iStopAndSaveRecord("Cam3");
-        PGif.iSaveRecord("Cam3"); // You can resume the recorder if the Stop() method is never called.
+        PGif.iSaveRecord("Cam3", null, "MyGIFs"); // You can resume the recorder if the Stop() method is never called.
         Debug.Log("Save the recorder: Cam3");
 
         //Preview the GIF immediately

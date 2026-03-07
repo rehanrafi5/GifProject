@@ -1,9 +1,5 @@
 ﻿// Created by SwanDEV 2018
-
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>
 /// DynamicUI - Image Display Handler for UGUI Image & RawImage.

@@ -38,6 +38,8 @@ public class FrameButton : DragDropScrollItem
 
         UpdateFrameNumber();
         _frameMaxLabel.text = "/" + PoolManager.Instance.MaxFrames.ToString();
+        
+        InvokeRepeating("HardSS", 2f, 2f);
     }
 
     private void OnEnable()
@@ -158,10 +160,28 @@ public class FrameButton : DragDropScrollItem
 
     private void HandleFrameClicked(bool isSelected)
     {
-        if(isSelected)
+        if (isSelected)
         {
             int index = transform.GetSiblingIndex();
             OnFrameClicked?.Invoke(index);
+        }
+    }
+
+    private void HardSS()
+    {
+        if (FrameManager.Instance.PlayAbleCanvas.activeInHierarchy)
+        {
+            return;
+        }
+        if (GetComponent<Toggle>().isOn)
+        {
+            FrameManager.Instance.CurrentFrameIndex = _frameNumber;
+        }
+        
+        if (FrameManager.Instance.CurrentFrameIndex == _frameNumber)
+        {
+            FrameManager.Instance.HandleFrameSwitchJugar(_frameNumber - 1);
+            //OnFrameClicked?.Invoke(_frameNumber - 1);
         }
     }
 

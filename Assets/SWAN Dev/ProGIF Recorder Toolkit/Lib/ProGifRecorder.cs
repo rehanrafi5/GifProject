@@ -127,10 +127,7 @@ public class ProGifRecorder
 		if (recorderCom != null)
 			recorderCom.SetGifRotation(rotation);
 	}
-	public byte[] GetGif()
-	{
-		return recorderCom.GetGif();
-	}
+
 	/// <summary>
 	/// Set the gif aspect ratio.
 	/// * Change during/after PreProcessing state will not be applied.
@@ -238,11 +235,13 @@ public class ProGifRecorder
 	}
 
 	/// <summary>
-	/// Saves the stored frames to a gif file. The filename will automatically be generated.
-	/// Recording will be paused and won't resume automatically. You can use the 
-	/// <code>OnPreProcessingDone</code> callback to be notified when the pre-processing
-	/// step has finished.
+	/// Saves the stored frames to a gif file. The filename will automatically be generated. (Recording will be paused and won't resume automatically)
+	/// By default, the GIF will save to persistentDataPath directory(or project dataPath if in the editor).
+	/// The save path will return in the OnFileSaved callback, you can use it to move the GIF to other places with System.IO methods or use a native plugin to save it to the device gallery.
+	/// Use the 'OnPreProcessingDone' callback to be notified when the pre-processing step has finished, and you can resume the recorder again.
 	/// </summary>
+	/// <param name="gifFileName">The GIF filename without extension. If filename is null or empty, an unique one will be generated.</param>
+	/// <param name="subFolderName">The sub-folder for saving the GIF.</param>
 	public void Save() 
 	{
 		if (recorderCom != null)
@@ -250,16 +249,32 @@ public class ProGifRecorder
 	}
 
 	/// <summary>
-	/// Saves the stored frames to a gif file. If the filename is null or empty, an unique one
-	/// will be generated. You don't need to add the .gif extension to the name. Recording will
-	/// be paused and won't resume automatically. You can use the <code>OnPreProcessingDone</code>
-	/// callback to be notified when the pre-processing step has finished.
+	/// Saves the stored frames to a gif file. (Recording will be paused and won't resume automatically)
+	/// By default, the GIF will save to persistentDataPath directory(or project dataPath if in the editor).
+	/// The save path will return in the OnFileSaved callback, you can use it to move the GIF to other places with System.IO methods or use a native plugin to save it to the device gallery.
+	/// Use the 'OnPreProcessingDone' callback to be notified when the pre-processing step has finished, and you can resume the recorder again.
 	/// </summary>
-	/// <param name="filename">File name without extension</param>
-	public void Save(string filename) 
+	/// <param name="gifFileName">The GIF filename without extension. If filename is null or empty, an unique one will be generated.</param>
+	/// <param name="subFolderName">The sub-folder for saving the GIF.</param>
+	public void Save(string gifFileName, string subFolderName = "") 
 	{
 		if (recorderCom != null)
-			recorderCom.Save(filename);
+			recorderCom.Save(gifFileName, subFolderName);
+	}
+
+	/// <summary>
+	/// Saves the stored frames to a gif file bytes data and returns it in the onGifBytesReceive callback, optional to provide a filename to save the GIF file. (Recording will be paused and won't resume automatically)
+	/// By default, the GIF will save to persistentDataPath directory(or project dataPath if in the editor).
+	/// The save path will return in the OnFileSaved callback, you can use it to move the GIF to other places with System.IO methods or use a native plugin to save it to the device gallery.
+	/// Use the 'OnPreProcessingDone' callback to be notified when the pre-processing step has finished.
+	/// </summary>
+	/// <param name="onGifBytesReceive">Returns the encoded GIF file byte array.</param>
+	/// <param name="gifFileName">The GIF filename without extension. If filename is null or empty, the GIF will not be saved in the storage.</param>
+	/// <param name="subFolderName">The sub-folder for saving the GIF.</param>
+	public void Save(Action<byte[]> onGifBytesReceive, string gifFileName = "", string subFolderName = "")
+	{
+		if (recorderCom != null)
+			recorderCom.Save(onGifBytesReceive, gifFileName, subFolderName);
 	}
 
 	/// <summary>
@@ -358,6 +373,7 @@ public class ProGifRecorder
 	{
 		OnPreProcessingDone();
 	}
+
 
 	public void SetOnRecordAction(Action<float> onRecordAction)
 	{

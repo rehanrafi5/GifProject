@@ -45,11 +45,13 @@ public class ProGifManager : MonoBehaviour
     public bool m_AutoTransparent = false;
     [Tooltip("Set extra transparent settings? For if you have followed the TransparentSetupExample scene to set up the recorder.")]
     public bool m_TransparentExtras = false;
-    #endregion
+	[Tooltip("A message to embed in the GIF (optional) Comment-Extension. Suitable for including an image description, image credit, or other human-readable metadata such as the GPS location of the image capture.")]
+	public string m_Comments = "Created by Pro GIF Unity assets from SWAN DEV.";
+	#endregion
 
-    #region ----- GIF Player setting -----
-    /// Set to 'true' to take advantage of the highly optimized ProGif playback solution for significantly save the memory usage.
-    public bool m_OptimizeMemoryUsage = true;
+	#region ----- GIF Player setting -----
+	/// Set to 'true' to take advantage of the highly optimized ProGif playback solution for significantly save the memory usage.
+	public bool m_OptimizeMemoryUsage = true;
 	#endregion
 
 	private Action<int, string> _OnFileSavedAction = null;
@@ -154,8 +156,11 @@ public class ProGifManager : MonoBehaviour
 				m_Fps,   		//fps
 				m_Duration, 	//recorder time
 				m_Loop,    		//repeat, -1: no repeat, 0: infinite, >0: repeat count
-				m_Quality);  	//quality (1 - 100), 1: best, 100: faster
+				m_Quality);     //quality (1 - 100), 1: best, 100: faster
 		}
+
+		//Set the optional Comment-Extension
+		m_GifRecorder.recorderCom.m_Comments = m_Comments;
 
 		//Set the gif transparent color
 		m_GifRecorder.SetTransparent(m_TransparentColor, m_TransparentColorRange);
@@ -240,6 +245,19 @@ public class ProGifManager : MonoBehaviour
 
 		//Set the callback to update the record progress during recording.
 		m_GifRecorder.SetOnRecordAction(onRecordProgress);
+	}
+
+	/// <summary>
+	/// Embed a message in the GIF (optional) Comment-Extension. Suitable for including an image description, image credit, or other human-readable metadata such as the GPS location of the image capture.
+	/// </summary>
+	public void SetCommentExtension(string comments)
+	{
+		if (m_GifRecorder == null)
+		{
+			m_Comments = comments;
+			return;
+		}
+		m_GifRecorder.recorderCom.m_Comments = comments;
 	}
 
 	/// <summary>
@@ -346,46 +364,49 @@ public class ProGifManager : MonoBehaviour
         if (m_GifRecorder != null) m_GifRecorder.Stop();
 	}
 
-    /// <summary>
-    /// Saves the stored frames to a gif file.
-    /// </summary>
-    /// <param name="onRecorderPreProcessingDone">On recorder pre processing done.</param>
-    /// <param name="onFileSaveProgress">On file save progress. Retrun values: worker id(int), save progress(float).</param>
-    /// <param name="onFileSaved">On file saved. Return values: id(int), saved path(string).</param>
-    public void SaveRecord(Action onRecorderPreProcessingDone = null, Action<int, float> onFileSaveProgress = null, Action<int, string> onFileSaved = null, string fileNameWithoutExtension = "")
-    {
-        if (m_GifRecorder != null)
-        {
-            //Set callbacks
-            _OnRecorderPreProcessingDoneAction = onRecorderPreProcessingDone;
-            _OnFileSaveProgressAction = onFileSaveProgress;
-            _OnFileSavedAction = onFileSaved;
+	/// <summary>
+	/// Saves the stored frames to a gif file.
+	/// By default, the GIF will save to persistentDataPath directory(or project dataPath if in the editor).
+	/// The save path will return in the OnFileSaved callback, you can use it to move the GIF to other places with System.IO methods or use a native plugin to save it to the device gallery.
+	/// Use the 'OnPreProcessingDone' callback to be notified when the pre-processing step has finished, and you can resume the recorder again.
+	/// </summary>
+	/// <param name="onRecorderPreProcessingDone">On recorder pre processing done.</param>
+	/// <param name="onFileSaveProgress">On file save progress. Retrun values: worker id(int), save progress(float).</param>
+	/// <param name="onFileSaved">On file saved. Return values: id(int), saved path(string).</param>
+	/// <param name="gifFileName">The GIF filename without extension.</param>
+	/// <param name="subFolderName">The sub-folder for saving the GIF file.</param>
+	public void SaveRecord(Action onRecorderPreProcessingDone = null, Action<int, float> onFileSaveProgress = null, Action<int, string> onFileSaved = null, string gifFileName = "", string subFolderName = "")
+	{
+		//Set callbacks
+		_OnRecorderPreProcessingDoneAction = onRecorderPreProcessingDone;
+		_OnFileSaveProgressAction = onFileSaveProgress;
+		_OnFileSavedAction = onFileSaved;
 
-            //Saves the stored frames to a gif file. 
-            m_GifRecorder.Save(fileNameWithoutExtension);
-        }
-    }
+		//Saves the stored frames to a gif file. 
+		m_GifRecorder.Save(gifFileName, subFolderName);
+	}
 
-    /// <summary>
-    /// Stops the recorder and saves the stored frames to a gif file.
-    /// </summary>
-    /// <param name="onRecorderPreProcessingDone">On recorder pre processing done.</param>
-    /// <param name="onFileSaveProgress">On file save progress. Retrun values: worker id(int), save progress(float).</param>
-    /// <param name="onFileSaved">On file saved. Return values: id(int), saved path(string).</param>
-    public void StopAndSaveRecord(Action onRecorderPreProcessingDone = null, Action<int, float> onFileSaveProgress = null, Action<int, string> onFileSaved = null, string fileNameWithoutExtension = "")
-    {
-        if (m_GifRecorder != null)
-        {
-            //Stops the recording. The recording can NOT be resumed after it has been stopped
-            m_GifRecorder.Stop();
+	/// <summary>
+	/// Stops the recorder and saves the stored frames to a gif file.
+	/// By default, the GIF will save to persistentDataPath directory(or project dataPath if in the editor).
+	/// The save path will return in the OnFileSaved callback, you can use it to move the GIF to other places with System.IO methods or use a native plugin to save it to the device gallery.
+	/// </summary>
+	/// <param name="onRecorderPreProcessingDone">On recorder pre processing done.</param>
+	/// <param name="onFileSaveProgress">On file save progress. Retrun values: worker id(int), save progress(float).</param>
+	/// <param name="onFileSaved">On file saved. Return values: id(int), saved path(string).</param>
+	/// <param name="gifFileName">The GIF filename without extension.</param>
+	/// <param name="subFolderName">The sub-folder for saving the GIF file.</param>
+	public void StopAndSaveRecord(Action onRecorderPreProcessingDone = null, Action<int, float> onFileSaveProgress = null, Action<int, string> onFileSaved = null, string gifFileName = "", string subFolderName = "")
+	{
+		//Stops the recording. The recording can NOT be resumed after it has been stopped
+		m_GifRecorder.Stop();
 
-            //Sets callbacks and saves the stored frames to a gif file. You can call this method in any place in your code. 
-            SaveRecord(onRecorderPreProcessingDone, onFileSaveProgress, onFileSaved, fileNameWithoutExtension);
-        }
-    }
+		//Sets callbacks and saves the stored frames to a gif file. You can call this method in any place in your code. 
+		SaveRecord(onRecorderPreProcessingDone, onFileSaveProgress, onFileSaved, gifFileName, subFolderName);
+	}
 
-    //Unsubscribe and memory flushing in OnFileSaved callback
-    private void _OnRecorderFileSaved(int id, string path)
+	//Unsubscribe and memory flushing in OnFileSaved callback
+	private void _OnRecorderFileSaved(int id, string path)
 	{
 		#if UNITY_EDITOR
 		Debug.Log("Current saved gif path: " + path);
@@ -425,6 +446,29 @@ public class ProGifManager : MonoBehaviour
 		m_GifPlayer.Play(m_GifRecorder, playerImage, m_OptimizeMemoryUsage);
 		m_GifPlayer.SetLoadingCallback((progress)=>{
 			if(onLoading != null)
+			{
+				onLoading(progress);
+			}
+		});
+	}
+
+	/// <summary>
+	/// Play gif from Recorder, display with RawImage.
+	/// </summary>
+	/// <param name="playerRawImage">Target RawImage for displaying gif.</param>
+	/// <param name="onLoading">On loading. Return value: loading progress(float)</param>
+	public void PlayGif(RawImage playerRawImage, Action<float> onLoading = null)
+	{
+		if (m_GifRecorder == null)
+		{
+			Debug.LogWarning("GIF recorder not found!");
+			return;
+		}
+
+		m_GifPlayer = new ProGifPlayer();
+		m_GifPlayer.Play(m_GifRecorder, playerRawImage, m_OptimizeMemoryUsage);
+		m_GifPlayer.SetLoadingCallback((progress) => {
+			if (onLoading != null)
 			{
 				onLoading(progress);
 			}
@@ -478,29 +522,6 @@ public class ProGifManager : MonoBehaviour
 		});
 	}
 #endif
-
-	/// <summary>
-	/// Play gif from Recorder, display with RawImage.
-	/// </summary>
-	/// <param name="playerRawImage">Target RawImage for displaying gif.</param>
-	/// <param name="onLoading">On loading. Return value: loading progress(float)</param>
-	public void PlayGif(RawImage playerRawImage, Action<float> onLoading = null)
-	{
-		if (m_GifRecorder == null)
-		{
-			Debug.LogWarning("GIF recorder not found!");
-			return;
-		}
-
-		m_GifPlayer = new ProGifPlayer();
-		m_GifPlayer.Play(m_GifRecorder, playerRawImage, m_OptimizeMemoryUsage);
-		m_GifPlayer.SetLoadingCallback((progress) => {
-			if (onLoading != null)
-			{
-				onLoading(progress);
-			}
-		});
-	}
 
 	/// <summary>
 	/// Set the callback for checking the decode progress.

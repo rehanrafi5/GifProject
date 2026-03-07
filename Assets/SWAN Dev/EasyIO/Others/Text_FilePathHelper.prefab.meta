@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 044d85a093675ba42ad10ff954ec2ead
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 98258
+  packageName: Pro GIF Recorder Toolkit
+  packageVersion: 2.0.6
+  assetPath: Assets/SWAN Dev/EasyIO/Others/Text_FilePathHelper.prefab
+  uploadId: 690435

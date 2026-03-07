@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿// Created by SwanDev 2017
 using UnityEngine;
 
 public class SimpleStartDemo : MonoBehaviour
@@ -8,14 +7,12 @@ public class SimpleStartDemo : MonoBehaviour
 	public TextMesh textGifState;
 
 	public float gameTimingToStopRecord = 12f;
-	bool gameEnd = false;
+	private bool gameEnd = false;
 
 	public Camera mCamera = null;
 
+	/// <summary> The recorder will save gif using this filename if this is provided. The new gif will replace the old one if their filename are the same. </summary>
 	[Space()]
-	/// <summary>
-	/// The recorder will save gif using this filename if this is provided. The new gif will replace the old one if their filename are the same.
-	/// </summary>
 	[Tooltip("The recorder will save gif using this filename if this is provided. The new gif will replace the old one if their filename are the same.")]
 	public string optionalGifFileName = "MyGif";
 
@@ -25,24 +22,23 @@ public class SimpleStartDemo : MonoBehaviour
 	public string folderName = "GIF Demo";
 
 
-	// Use this for initialization
 	void Start()
 	{
-		//Create an instance for ProGifManager
+		// Get the instance of ProGifManager
 		ProGifManager gifMgr = ProGifManager.Instance;
 
-		//Make some changes to the record settings, you can let it auto aspect with screen size.. 
+		// Make some changes to the record settings, you can let it auto aspect based on screen size...
 		gifMgr.SetRecordSettings(true, 300, 300, 3, 15, 1, 30);
-		//Or give an aspect ratio for cropping gif frames just before encoding
+		// Or, give an aspect ratio for cropping gif frames just before encoding:
 		//gifMgr.SetRecordSettings(new Vector2(1, 1), 300, 300, 1, 15, 0, 30);
 
-		//Start gif recording
+		// Start gif recording
 		gifMgr.StartRecord((mCamera != null) ? mCamera : Camera.main,
-			(progress) =>
+			onRecordProgress: (progress) => // onRecordProgress callback
 			{
 				Debug.Log("[SimpleStartDemo] On record progress: " + progress);
 			},
-			() =>
+			onRecordDurationMax: () =>      // onRecordDurationMax callback
 			{
 				Debug.Log("[SimpleStartDemo] On recorder buffer max.");
 			});
@@ -51,7 +47,7 @@ public class SimpleStartDemo : MonoBehaviour
 		textGifState.text = "Start Record..";
 	}
 
-	float nextUpdateTime = 0f;
+	private float nextUpdateTime = 0f;
 	void Update()
 	{
 		if (gameEnd) return;
@@ -72,15 +68,16 @@ public class SimpleStartDemo : MonoBehaviour
 			gameEnd = true;
 			ProGifManager gifMgr = ProGifManager.Instance;
 
-			//Stop the recording
+			// Stop the recording
 			gifMgr.StopAndSaveRecord(
-				() =>
+
+				onRecorderPreProcessingDone: () => // onRecorderPreProcessingDone callback
 				{
 					Debug.Log("[SimpleStartDemo] On pre-processing done.");
 				},
-				(id, progress) =>
+
+				onFileSaveProgress: (id, progress) => // onFileSaveProgress callback
 				{
-					//Debug.Log("[SimpleStartDemo] On save progress: " + progress);
 					if (progress < 1f)
 					{
 						textGifState.text = "Making Gif : " + Mathf.CeilToInt(progress * 100) + "%";
@@ -90,9 +87,10 @@ public class SimpleStartDemo : MonoBehaviour
 						textGifState.text = "The gif file is created, find the path in the debug console.";
 					}
 				},
-				(id, path) =>
+
+				onFileSaved: (id, path) => // onFileSaved callback
 				{
-					//Clear the existing recorder, player and reset gif manager
+					// Clear the existing recorder, player and reset gif manager
 					gifMgr.Clear();
 					Debug.Log("[SimpleStartDemo] On saved, origin save path: " + path);
 
@@ -100,26 +98,31 @@ public class SimpleStartDemo : MonoBehaviour
 					{
 #if SDEV_MobileMedia
 						// Copy the newly created GIF file from internal path to external, i.e. Android/iOS device gallery
-                        string nativeSavePath = MobileMedia.CopyMedia(path, folderName, System.IO.Path.GetFileNameWithoutExtension(path), ".gif", true);
-                        //MobileMedia.SaveBytes(System.IO.File.ReadAllBytes(path), "YourGifFolderName", "YourGifFileName", ".gif", true);
+						MobileMedia.CopyMedia(path, folderName, System.IO.Path.GetFileNameWithoutExtension(path), ".gif", true);
+						/*MobileMedia.SaveBytes(System.IO.File.ReadAllBytes(path), "YourGifFolderName", "YourGifFileName", ".gif", true);*/
 
-                        if (deleteOriginGif) System.IO.File.Delete(path);
-
-                        Debug.Log("Native Save Path(Andorid Only): " + nativeSavePath);
-#if UNITY_EDITOR
-                        Application.OpenURL(System.IO.Path.GetDirectoryName(nativeSavePath));
-#endif
+						if (deleteOriginGif) System.IO.File.Delete(path);
+#else
+						Debug.LogWarning("To save media files to device Gallery, please add 'SDEV_MobileMedia' to: Build Settings > Player Settings > Player > Other > Scripting Define Symbols");
 #endif
 					}
 					else
 					{
+						// Get target save path
+						string targetDirectory = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(path), folderName);
+						string moveToPath = System.IO.Path.Combine(targetDirectory, System.IO.Path.GetFileName(path));
+
+						// Move the GIF to target path
+						FilePathName.Instance.MoveFile(path, moveToPath, replaceIfExist: true);
 #if UNITY_EDITOR
-						Application.OpenURL(System.IO.Path.GetDirectoryName(path));
+						// Editor only: view the GIF in editor
+						UnityEditor.EditorUtility.RevealInFinder(targetDirectory);
+						Debug.Log("[SimpleStartDemo] On saved, moved to path: " + moveToPath);
 #endif
 					}
 				},
-				optionalGifFileName
-				);
+
+				optionalGifFileName);
 		}
 	}
 }

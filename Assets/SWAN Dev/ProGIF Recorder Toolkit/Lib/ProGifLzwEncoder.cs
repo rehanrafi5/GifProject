@@ -1,6 +1,6 @@
 ﻿
-using System;
-using System.IO;
+	using System;
+	using System.IO;
 
 internal class ProGifLzwEncoder
 {
@@ -83,25 +83,26 @@ internal class ProGifLzwEncoder
 	int cur_accum = 0;
 	int cur_bits = 0;
 
-	int [] masks =
+	int[] masks =
 	{
-		0x0000,
-		0x0001,
-		0x0003,
-		0x0007,
-		0x000F,
-		0x001F,
-		0x003F,
-		0x007F,
-		0x00FF,
-		0x01FF,
-		0x03FF,
-		0x07FF,
-		0x0FFF,
-		0x1FFF,
-		0x3FFF,
-		0x7FFF,
-		0xFFFF };
+        0x0000,
+        0x0001,
+        0x0003,
+        0x0007,
+        0x000F,
+        0x001F,
+        0x003F,
+        0x007F,
+        0x00FF,
+        0x01FF,
+        0x03FF,
+        0x07FF,
+        0x0FFF,
+        0x1FFF,
+        0x3FFF,
+        0x7FFF,
+        0xFFFF
+	};
 
 	// Number of characters so far in this 'packet'
 	int a_count;
@@ -110,7 +111,7 @@ internal class ProGifLzwEncoder
 	byte[] accum = new byte[256];
 
 	//----------------------------------------------------------------------------
-	public ProGifLzwEncoder(int width, int height, byte[] pixels, int color_depth) 
+	public ProGifLzwEncoder(int width, int height, byte[] pixels, int color_depth)
 	{
 		pixAry = pixels;
 		initCodeSize = Math.Max(2, color_depth);
@@ -138,7 +139,7 @@ internal class ProGifLzwEncoder
 	}
 
 	// reset code table
-	void ResetCodeTable(int hsize) 
+	void ResetCodeTable(int hsize)
 	{
 		for (int i = 0; i < hsize; ++i)
 			htab[i] = -1;
@@ -175,32 +176,32 @@ internal class ProGifLzwEncoder
 			++hshift;
 		hshift = 8 - hshift; // set hash code range bound
 
-		hsize_reg = hsize;
-		ResetCodeTable(hsize_reg); // clear hash table
+        hsize_reg = hsize;
+        ResetCodeTable(hsize_reg); // clear hash table
 
-		Output(ClearCode, outs);
+        Output(ClearCode, outs);
 
-		outer_loop : while ((c = NextPixel()) != EOF) 
-		{
-			fcode = (c << maxbits) + ent;
-			i = (c << hshift) ^ ent; // xor hashing
+    outer_loop: while ((c = NextPixel()) != EOF)
+        {
+            fcode = (c << maxbits) + ent;
+            i = (c << hshift) ^ ent; // xor hashing
 
-			if (htab[i] == fcode) 
-			{
-				ent = codetab[i];
-				continue;
-			} 
+            if (htab[i] == fcode)
+            {
+                ent = codetab[i];
+                continue;
+			}
 			else if (htab[i] >= 0) // non-empty slot
 			{
 				disp = hsize_reg - i; // secondary hash (after G. Knott)
 				if (i == 0)
 					disp = 1;
-				do 
+				do
 				{
 					if ((i -= disp) < 0)
 						i += hsize_reg;
 
-					if (htab[i] == fcode) 
+					if (htab[i] == fcode)
 					{
 						ent = codetab[i];
 						goto outer_loop;
@@ -209,11 +210,11 @@ internal class ProGifLzwEncoder
 			}
 			Output(ent, outs);
 			ent = c;
-			if (free_ent < maxmaxcode) 
+			if (free_ent < maxmaxcode)
 			{
 				codetab[i] = free_ent++; // code -> hashtable
 				htab[i] = fcode;
-			} 
+			}
 			else
 				ClearTable(outs);
 		}
@@ -223,9 +224,9 @@ internal class ProGifLzwEncoder
 	}
 
 	//----------------------------------------------------------------------------
-	public void Encode( Stream os)
+	public void Encode(Stream os)
 	{
-		os.WriteByte( Convert.ToByte( initCodeSize) ); // write "initial code size" byte
+		os.WriteByte(Convert.ToByte(initCodeSize)); // write "initial code size" byte
 		curPixel = 0;
 		Compress(initCodeSize + 1, os); // compress and write the pixel data
 		os.WriteByte(0); // write block terminator
@@ -234,15 +235,15 @@ internal class ProGifLzwEncoder
 	// Flush the packet to disk, and reset the accumulator
 	void Flush(Stream outs)
 	{
-		if (a_count > 0) 
+		if (a_count > 0)
 		{
-			outs.WriteByte( Convert.ToByte( a_count ));
+			outs.WriteByte(Convert.ToByte(a_count));
 			outs.Write(accum, 0, a_count);
 			a_count = 0;
 		}
 	}
 
-	int MaxCode(int n_bits) 
+	int MaxCode(int n_bits)
 	{
 		return (1 << n_bits) - 1;
 	}
@@ -250,7 +251,7 @@ internal class ProGifLzwEncoder
 	//----------------------------------------------------------------------------
 	// Return the next pixel from the image
 	//----------------------------------------------------------------------------
-	private int NextPixel() 
+	private int NextPixel()
 	{
 		if (curPixel == pixAry.Length)
 			return EOF;
@@ -270,23 +271,23 @@ internal class ProGifLzwEncoder
 
 		cur_bits += n_bits;
 
-		while (cur_bits >= 8) 
+		while (cur_bits >= 8)
 		{
-			Add((byte) (cur_accum & 0xff), outs);
+			Add((byte)(cur_accum & 0xff), outs);
 			cur_accum >>= 8;
 			cur_bits -= 8;
 		}
 
 		// If the next entry is going to be too big for the code size,
 		// then increase it, if possible.
-		if (free_ent > maxcode || clear_flg) 
+		if (free_ent > maxcode || clear_flg)
 		{
-			if (clear_flg) 
+			if (clear_flg)
 			{
 				maxcode = MaxCode(n_bits = g_init_bits);
 				clear_flg = false;
-			} 
-			else 
+			}
+			else
 			{
 				++n_bits;
 				if (n_bits == maxbits)
@@ -296,12 +297,12 @@ internal class ProGifLzwEncoder
 			}
 		}
 
-		if (code == EOFCode) 
+		if (code == EOFCode)
 		{
 			// At EOF, write the rest of the buffer.
-			while (cur_bits > 0) 
+			while (cur_bits > 0)
 			{
-				Add((byte) (cur_accum & 0xff), outs);
+				Add((byte)(cur_accum & 0xff), outs);
 				cur_accum >>= 8;
 				cur_bits -= 8;
 			}
@@ -310,4 +311,3 @@ internal class ProGifLzwEncoder
 		}
 	}
 }
-

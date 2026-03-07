@@ -32,13 +32,7 @@ public class RecorderManagerWebGL : MonoBehaviour
         Instance = this;
     }
 
-    public List<Frame>  frames = new List<Frame>();
-    public void SetFrames(List<Frame> _frames)
-    {
-        frames = _frames;
-        
-        
-    }
+    
     
     private void Start()
     {
@@ -98,28 +92,28 @@ public class RecorderManagerWebGL : MonoBehaviour
     {
         Debug.Log(gifBytes.Length);
     }
-#if UNITY_WEBGL && !UNITY_EDITOR
-[DllImport("__Internal")]
-private static extern void DownloadGifFile(byte[] data, int length, string fileName);
-#endif
-    public void DownloadGif(byte[] gifBytes, string filename)
-    {
-#if UNITY_WEBGL && !UNITY_EDITOR
-    if (gifBytes == null || gifBytes.Length == 0)
-    {
-        Debug.LogError("GIF bytes are empty — aborting download");
-        return;
-    }
-
-    if (!filename.ToLower().EndsWith(".gif"))
-        filename += ".gif";
-
-    Debug.Log("Downloading GIF, size: " + gifBytes.Length);
-
-    DownloadGifFile(gifBytes, gifBytes.Length, filename);
-        _recorder.m_State = "Idle";
-#else
-        Debug.Log("Download only works in WebGL build");
-#endif
-    }
+// #if UNITY_WEBGL && !UNITY_EDITOR
+// [DllImport("__Internal")]
+// private static extern void DownloadGifFile(byte[] data, int length, string fileName);
+// #endif
+//     public void DownloadGif(byte[] gifBytes, string filename)
+//     {
+// #if UNITY_WEBGL && !UNITY_EDITOR
+//     // if (gifBytes == null || gifBytes.Length == 0)
+//     // {
+//     //     Debug.LogError("GIF bytes are empty — aborting download");
+//     //     return;
+//     // }
+//     //
+//     // if (!filename.ToLower().EndsWith(".gif"))
+//     //     filename += ".gif";
+//     //
+//     // Debug.Log("Downloading GIF, size: " + gifBytes.Length);
+//     //
+//     // DownloadGifFile(gifBytes, gifBytes.Length, filename);
+//     //     _recorder.m_State = "Idle";
+// #else
+//         Debug.Log("Download only works in WebGL build");
+// #endif
+//     }
 }

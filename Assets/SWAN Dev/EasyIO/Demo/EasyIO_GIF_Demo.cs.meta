@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: 1c34fed19f9ce944aa7309328628a76c
+timeCreated: 1557909438
+licenseType: Store
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 98258
+  packageName: Pro GIF Recorder Toolkit
+  packageVersion: 2.0.6
+  assetPath: Assets/SWAN Dev/EasyIO/Demo/EasyIO_GIF_Demo.cs
+  uploadId: 690435

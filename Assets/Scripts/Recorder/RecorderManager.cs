@@ -106,28 +106,10 @@ public class RecorderManager : Singleton<RecorderManager>
     private void HandleWebGLGif(string path)
     {
         GIFManager.Instance.OnStop();
-
+        
         Debug.Log("1");
 #if UNITY_WEBGL && !UNITY_EDITOR
-    var recorder = PGif.iGetRecorder("CodelessProGifRecorder");
-        Debug.Log("2");
-    if (recorder == null)
-    {
-        Debug.LogError("PGif recorder not found");
-        return;
-    }
-        Debug.Log("3");
-
-    byte[] gifBytes = recorder.GetGif();
-
-    if (gifBytes == null || gifBytes.Length == 0)
-    {
-        Debug.LogError("GIF bytes are empty");
-        return;
-    }
-        Debug.Log("4");
-
-    DownloadGif(gifBytes, _filename);
+    StartCoroutine(SyncAndDownload(path));
 #endif
         
         _loadingPopup.SetDescription("Saving GIF file...");
@@ -148,27 +130,24 @@ public class RecorderManager : Singleton<RecorderManager>
         _loadingPopup.Hide();
         _successBanner.SetActive(true);
     }
-    
-#if UNITY_WEBGL && !UNITY_EDITOR
-[DllImport("__Internal")]
-private static extern void DownloadGifFile(byte[] data, int length, string fileName);
-#endif
-    public void DownloadGif(byte[] gifBytes, string filename)
+    IEnumerator SyncAndDownload(string path)
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
-    if (gifBytes == null || gifBytes.Length == 0)
-    {
-        Debug.LogError("GIF bytes are empty — aborting download");
-        return;
+        yield return new WaitForEndOfFrame(); // allow FS write to complete
+
+        byte[] bytes = _recorder.GetBytes();
+        SaveGifWebGL(bytes, "litkit");
     }
+#if UNITY_WEBGL && !UNITY_EDITOR
+[System.Runtime.InteropServices.DllImport("__Internal")]
+private static extern void DownloadFile(string fileName, byte[] data, int length);
+#endif
 
-    if (!filename.ToLower().EndsWith(".gif"))
-        filename += ".gif";
-
-    Debug.Log("Downloading GIF, size: " + gifBytes.Length);
-
-    DownloadGifFile(gifBytes, gifBytes.Length, filename);
-        _recorder.m_State = "Idle";
+    public void SaveGifWebGL(byte[] gifBytes, string fileName)
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+    DownloadFile(fileName, gifBytes, gifBytes.Length);
+#else
+        Debug.Log("WebGL download only works in WebGL build");
 #endif
     }
 }

@@ -9,6 +9,9 @@ internal class ProGifEncoder
     public bool m_IsFirstFrame = true;
     public bool m_IsLastEncoder = false;
 
+	/// <summary> A message to embed in the GIF Comment-Extension. Suitable for including an image description, image credit, or other human-readable metadata such as the GPS location of the image capture. </summary>
+	public string m_Comments = string.Empty;
+
     protected int m_Width;
 	protected int m_Height;
 	protected int m_Repeat = -1;                  // -1: no repeat, 0: infinite, >0: repeat count
@@ -49,7 +52,8 @@ internal class ProGifEncoder
 	public bool m_AutoTransparent = false;
 	protected bool m_HasTransparentPixel = false;
 
-    private bool _transparentByColor = false;
+
+	private bool _transparentByColor = false;
     private byte _transparentColorRange = 0;
 
     /// <summary>
@@ -101,7 +105,7 @@ internal class ProGifEncoder
     /// <param name="frame">GifFrame containing frame to write.</param>
     public void AddFrame(Frame frame)
     {
-        if ((frame == null))
+        if (frame == null)
             throw new ArgumentNullException("Can't add a null frame to the gif.");
 
         if (!m_HasStarted)
@@ -127,7 +131,9 @@ internal class ProGifEncoder
 
             if (m_Repeat >= 0) 
                 WriteNetscapeExt();
-        }
+
+			WriteCommentExt();
+		}
 
         WriteGraphicCtrlExt();
         WriteImageDesc();
@@ -135,8 +141,8 @@ internal class ProGifEncoder
         if (!m_IsFirstFrame)
             WritePalette();
 
-        WritePixels();
-        m_IsFirstFrame = false;
+		WritePixels();
+		m_IsFirstFrame = false;
     }
 
 	/// <summary>
@@ -231,14 +237,14 @@ internal class ProGifEncoder
     protected void GetImagePixels()
     {
         int W = m_CurrentFrame.Width, H = m_CurrentFrame.Height;
-        m_Pixels = new Byte[3 * W * H];
+        m_Pixels = new byte[3 * W * H];
         Color32[] p = m_CurrentFrame.Data;
         int count = 0;
         int count_a = 0;
 
         if (m_AutoTransparent)
         {
-            m_PixelsAlpha = new Byte[W * H];
+            m_PixelsAlpha = new byte[W * H];
 
             for (int th = H - 1; th >= 0; th--)
             {
@@ -265,7 +271,7 @@ internal class ProGifEncoder
 
             if (checkTransparentColor)
             {
-                m_PixelsAlpha = new Byte[W * H];
+                m_PixelsAlpha = new byte[W * H];
 
                 for (int th = H - 1; th >= 0; th--)
                 {
@@ -348,7 +354,7 @@ internal class ProGifEncoder
 		m_Pixels = null;
 		m_PixelsAlpha = null;
 		m_ColorDepth = 8;
-		m_PaletteSize = 7;
+        m_PaletteSize = 7;
 	}
 
     public void SetTransparencyColor(Color32 c32, byte transparentColorRange)
@@ -436,6 +442,31 @@ internal class ProGifEncoder
         m_MemoryStream.WriteByte(0);       // Block terminator
     }
 
+	// Writes comment extension. Suitable for including an image description, image credit, or other human-readable metadata such as the GPS location of the image capture.
+	protected void WriteCommentExt()
+    {
+		if (string.IsNullOrEmpty(m_Comments)) return;
+
+		m_MemoryStream.WriteByte(0x21);    // Extension introducer
+		m_MemoryStream.WriteByte(0xfe);    // App extension label
+
+		// Split the comments and write to subblocks
+		int remainder = m_Comments.Length % 255;
+		int nsubblocks_full = m_Comments.Length / 255;
+		int nsubblocks = nsubblocks_full + (remainder > 0 ? 1 : 0);
+		int ibyte = 0;
+		for (int isb = 0; isb < nsubblocks; ++isb)
+		{
+			int size = isb < nsubblocks_full ? 255 : remainder;
+			m_MemoryStream.WriteByte((byte)size);	// Block size
+			byte[] bytes = System.Text.Encoding.ASCII.GetBytes(m_Comments.Substring(ibyte, size));
+			m_MemoryStream.Write(bytes, 0, bytes.Length);
+			ibyte += size;
+		}
+
+		m_MemoryStream.WriteByte(0);       // Block terminator
+	}
+
     // Write color table.
     protected void WritePalette()
 	{
@@ -461,7 +492,7 @@ internal class ProGifEncoder
 	}
 
 	// Writes string to output stream.
-	protected void WriteString(String s)
+	protected void WriteString(string s)
 	{
 		char[] chars = s.ToCharArray();
 
@@ -470,7 +501,7 @@ internal class ProGifEncoder
 	}
 }
 
-public class Frame
+internal class Frame
 {
 	public int Width;
 	public int Height;
